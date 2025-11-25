@@ -1,0 +1,39 @@
+name: Update Bitcoin Version Branch
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  check-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Get latest Bitcoin Core release
+        id: get_release
+        run: |
+          LATEST=$(curl -s https://api.github.com/repos/bitcoin/bitcoin/releases/latest | jq -r .tag_name)
+          echo "LATEST_RELEASE=$LATEST" >> $GITHUB_ENV
+
+      - name: Check if branch exists
+        id: branch_check
+        run: |
+          git fetch origin
+          if git show-ref --verify --quiet refs/heads/${LATEST_RELEASE}; then
+            echo "Branch exists"
+            echo "BRANCH_EXISTS=true" >> $GITHUB_ENV
+          else
+            echo "Branch does not exist"
+            echo "BRANCH_EXISTS=false" >> $GITHUB_ENV
+          fi
+
+      - name: Create branch if new release
+        if: env.BRANCH_EXISTS == 'false'
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git checkout -b ${LATEST_RELEASE}
+          git push origin ${LATEST_RELEASE}
