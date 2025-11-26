@@ -27,12 +27,6 @@ jobs:
           echo "tags=$(cat tags.json)" >> $GITHUB_OUTPUT
         shell: bash
 
-      - name: Debug Output
-        run: |
-          cat tags.json
-          echo "Output for matrix:"
-          echo "${{ steps.set_tags.outputs.tags }}"
-
   create-branch:
     needs: prepare
     runs-on: ubuntu-latest
