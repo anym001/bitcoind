@@ -53,21 +53,9 @@ Place optional config in:
 /bitcoin/.bitcoin/bitcoin.conf
 ```
 
-**Cosign Signing**
-
-Images are signed using Sigstore Keyless Signing, which means:
-- No keys needed
-- GitHub Actions identity is used
-- Your signature is verifiable through Sigstore transparency logs
-
-Users can verify your images with:
-```
-cosign verify ghcr.io/anym001/bitcoind:v30.0
-```
-
 **Contributing**
 
 Pull requests are welcome - especially improvements to:
 - Docker security hardening
 - Automated workflows
-- Cosign verification examples
+- etc.
