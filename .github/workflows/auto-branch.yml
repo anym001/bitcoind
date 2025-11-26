@@ -31,7 +31,7 @@ jobs:
         run: |
           cat tags.json
           echo "Output for matrix:"
-          echo "${{ steps.set-tags.outputs.tags }}"
+          echo "${{ steps.set_tags.outputs.tags }}"
 
   create-branch:
     needs: prepare
