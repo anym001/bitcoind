@@ -20,10 +20,12 @@ jobs:
       - name: Extract version from branch name
         id: version
         run: |
-          RAW="${GITHUB_REF##*/}"      # z.B. v28.1
-          VERSION="${RAW#v}"           # → 28.1
-          echo "BITCOIN_VERSION=$VERSION" >> $GITHUB_ENV
+          RAW="${GITHUB_REF##*/}"          # z.B. v28.1
+          VERSION="${RAW#v}"               # → 28.1
+          MAJOR_VERSION="${VERSION%%.*}"   # → 28
+          
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "major_version=$MAJOR_VERSION" >> $GITHUB_OUTPUT
 
           ASSET="bitcoin-${VERSION}-x86_64-linux-gnu.tar.gz"
           echo "ASSET=$ASSET" >> $GITHUB_ENV
@@ -36,7 +38,7 @@ jobs:
 
       - name: Download Bitcoin Core assets
         run: |
-          VERSION="${BITCOIN_VERSION}"
+          VERSION="${{ steps.version.outputs.version }}"
           BASE="https://bitcoincore.org/bin/bitcoin-core-${VERSION}"
           curl -fSL -O ${BASE}/${ASSET}
           curl -fSL -O ${BASE}/SHA256SUMS
@@ -77,4 +79,6 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/bitcoind:${{ steps.version.outputs.version }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/bitcoind:${{ steps.version.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/bitcoind:${{ steps.version.outputs.major_version }}-stable
