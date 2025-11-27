@@ -41,8 +41,6 @@ jobs:
         while read -r TAG; do
           [ -z "$TAG" ] && continue
 
-          echo "Processing tag: $TAG"
-
           # Does branch already exist?
           if git ls-remote --heads origin "$TAG" | grep "$TAG" >/dev/null; then
             echo "→ Branch $TAG already exists. Skipping."
