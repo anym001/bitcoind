@@ -57,6 +57,11 @@ jobs:
           # Create new branch
           git checkout -b "$TAG"
 
+          # Remove auto-branch.yml, if present
+          if [ -f .github/workflows/auto-branch.yml ]; then
+            git rm .github/workflows/auto-branch.yml
+          fi
+
           # Create a trigger commit (required for workflows to start)
           echo "$TAG" > .version
           git add .version
