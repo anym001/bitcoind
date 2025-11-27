@@ -39,19 +39,32 @@ jobs:
         while read -r TAG; do
           [ -z "$TAG" ] && continue
 
+          echo "Processing tag: $TAG"
+
+          # Does branch already exist?
           if git ls-remote --heads origin "$TAG" | grep "$TAG" >/dev/null; then
-            echo "Branch $TAG exists → OK"
+            echo "→ Branch $TAG already exists. Skipping."
             continue
           fi
 
-          echo "Creating new version branch: $TAG"
+          echo "→ Creating new version branch: $TAG"
 
+          # Ensure we have latest main
+          git fetch origin main
           git checkout main
-          git pull --rebase
+          git pull --rebase origin main
 
+          # Create new branch
           git checkout -b "$TAG"
+
+          # Create a trigger commit (required for workflows to start)
+          echo "$TAG" > .version
+          git add .version
+          git commit -m "Initialize branch $TAG"
+
+          # Push new branch
           git push origin "$TAG"
 
-          echo "Created and pushed $TAG"
+          echo "→ Branch $TAG created and pushed."
 
         done < filtered_tags.txt
