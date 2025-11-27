@@ -11,7 +11,7 @@ docker run -d \
   -v /your/data/dir:/bitcoin/.bitcoin \
   -p 8332:8332 \
   -p 8333:8333 \
-  ghcr.io/anym001/bitcoind:v30.0
+  ghcr.io/anym001/bitcoind:<version>
 ```
 
 **Configuration**
