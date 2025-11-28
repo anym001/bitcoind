@@ -43,7 +43,7 @@ jobs:
             | sed 's/^v//' \
             | sort -V)
 
-          if [ -z "$OFFICIAL_VERSIONS" ] || [ -z "$LATEST_VERSION" ] || [ -z "$CURRENT_VERSIONS" ]; then
+          if [ -z "$OFFICIAL_VERSIONS" ] || [ -z "$LATEST_VERSION" ]; then
             echo "Can't fetch releases!"
             exit 1
           fi
