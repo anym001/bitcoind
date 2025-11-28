@@ -45,7 +45,7 @@ jobs:
       - name: Download Bitcoin Core binaries
         run: |
           BASE="https://bitcoincore.org/bin/bitcoin-core-${{ steps.versions.outputs.SHORT_VERSION }}"
-          curl -fSL -O ${BASE}/${{ steps.versions.outputs.ASSET }}}
+          curl -fSL -O ${BASE}/${{ steps.versions.outputs.ASSET }}
           curl -fSL -O ${BASE}/SHA256SUMS
           curl -fSL -O ${BASE}/SHA256SUMS.asc
 
