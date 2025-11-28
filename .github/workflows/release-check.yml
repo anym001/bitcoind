@@ -32,7 +32,8 @@ jobs:
             | grep -E '^v(2[8-9]|[3-9][0-9])\.[0-9]+$' \
             | grep -vE 'rc[0-9]+$' \
             | sed 's/^v//' \
-            | sort -V)
+            | sort -V \
+            | tr '\n' ' ')
 
           LATEST_VERSION=$(curl -s https://api.github.com/repos/bitcoin/bitcoin/releases/latest \
             | jq -r '.tag_name' \
@@ -41,7 +42,8 @@ jobs:
           CURRENT_VERSIONS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases \
             | jq -r '.[].tag_name' \
             | sed 's/^v//' \
-            | sort -V)
+            | sort -V \
+            | tr '\n' ' ')
 
           if [ -z "$OFFICIAL_VERSIONS" ] || [ -z "$LATEST_VERSION" ]; then
             echo "Can't fetch releases!"
