@@ -3,8 +3,8 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-    # Bundle every github-actions update into a single weekly PR instead of
+      interval: "monthly"
+    # Bundle every github-actions update into a single monthly PR instead of
     # one PR per action. Avoids the mutual merge conflicts that separate PRs
     # cause once the first one lands (each touches the same pinned-SHA lines
     # in the workflow files).
@@ -17,7 +17,7 @@ updates:
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     groups:
       docker:
         patterns:
