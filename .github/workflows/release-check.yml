@@ -21,34 +21,51 @@ jobs:
         env:
           # Authenticate the GitHub API reads. Unauthenticated calls share a
           # 60 req/h-per-IP budget on shared runners and intermittently return
-          # a non-JSON error body, which made `jq` fail ("Invalid numeric
-          # literal" → "Can't fetch releases!"). The default GITHUB_TOKEN's
-          # contents:read scope is enough to read public release lists.
+          # a non-JSON error body. That alone wasn't enough: even
+          # authenticated, GitHub occasionally hands back a transient
+          # non-JSON body (rate limit / abuse-detection page), which made
+          # `jq` fail with an opaque "Invalid numeric literal" and gave no
+          # clue what was actually returned. fetch_json() below retries a
+          # few times and validates the body is real JSON before use, and
+          # logs the HTTP status + a snippet of the bad body on failure so a
+          # future break is diagnosable instead of a bare crash.
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          OFFICIAL_VERSIONS=$(curl -s \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/bitcoin/bitcoin/releases?per_page=100" \
-            | jq -r '.[].tag_name' \
+          fetch_json() {
+            local url="$1" attempt response http_code body
+            for attempt in 1 2 3; do
+              response="$(curl -sS -w '\n%{http_code}' \
+                -H "Authorization: Bearer $GH_TOKEN" \
+                -H "Accept: application/vnd.github+json" \
+                "$url" 2>/dev/null || true)"
+              http_code="${response##*$'\n'}"
+              body="${response%$'\n'*}"
+              if [ "$http_code" = "200" ] && jq empty >/dev/null 2>&1 <<<"$body"; then
+                printf '%s' "$body"
+                return 0
+              fi
+              echo "::warning::Attempt $attempt/3 failed for $url (HTTP ${http_code:-none}): $(head -c 200 <<<"$body")" >&2
+              sleep $((attempt * 2))
+            done
+            return 1
+          }
+
+          OFFICIAL_JSON=$(fetch_json "https://api.github.com/repos/bitcoin/bitcoin/releases?per_page=100") \
+            || { echo "Can't fetch official releases!"; exit 1; }
+          OFFICIAL_VERSIONS=$(jq -r '.[].tag_name' <<<"$OFFICIAL_JSON" \
             | grep -E '^v(2[8-9]|[3-9][0-9])\.[0-9]+(\.[0-9]+)?$' \
             | grep -vE 'rc[0-9]+$' \
             | sed 's/^v//' \
             | sort -V \
             | tr '\n' ' ')
 
-          LATEST_VERSION=$(curl -s \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/bitcoin/bitcoin/releases/latest" \
-            | jq -r '.tag_name' \
-            | sed 's/^v//')
+          LATEST_JSON=$(fetch_json "https://api.github.com/repos/bitcoin/bitcoin/releases/latest") \
+            || { echo "Can't fetch latest release!"; exit 1; }
+          LATEST_VERSION=$(jq -r '.tag_name' <<<"$LATEST_JSON" | sed 's/^v//')
 
-          CURRENT_VERSIONS=$(curl -s \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${{ github.repository }}/releases?per_page=100" \
-            | jq -r '.[].tag_name' \
+          CURRENT_JSON=$(fetch_json "https://api.github.com/repos/${{ github.repository }}/releases?per_page=100") \
+            || { echo "Can't fetch current releases!"; exit 1; }
+          CURRENT_VERSIONS=$(jq -r '.[].tag_name' <<<"$CURRENT_JSON" \
             | sed 's/^v//' \
             | sort -V \
             | tr '\n' ' ')
